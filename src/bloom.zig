@@ -81,34 +81,7 @@ test "bloom filter" {
 test "add complex object" {
     const FVN = std.hash.Fnv1a_128;
     var bloom = try BloomFilter.init(1000, 5);
-    const obj = "ciao come stai";
+    const obj = "abc def ghi";
     bloom.add(FVN.hash(std.mem.asBytes(obj)));
     try testing.expectEqual(@as(usize, 5), bloom.buffer.count());
-}
-
-test "mem hash" {
-    const str = "ciao";
-    const FVN = std.hash.Fnv1a_128;
-    std.log.warn("str: {s}, hash {d}\n", .{ str, FVN.hash(std.mem.asBytes(str)) });
-    const x = "ciao";
-    std.log.warn("str: {s}, hash {d}\n", .{ x, FVN.hash(std.mem.asBytes(x)) });
-    const i: u32 = 10;
-    std.log.warn("int: {d}, hash {d}\n", .{ i, FVN.hash(std.mem.asBytes(&i)) });
-    const j: u64 = 10;
-    std.log.warn("int: {d}, hash {d}\n", .{ j, FVN.hash(std.mem.asBytes(&j)) });
-    const h: u64 = 10;
-    std.log.warn("int: {d}, hash {d}\n", .{ h, FVN.hash(std.mem.asBytes(&h)) });
-}
-
-test "hashing object" {
-    const str = "ciao";
-    const autoHash = std.hash.autoHash;
-    var hasher = std.hash.Wyhash.init(0);
-    const x = "ciao";
-    autoHash(&hasher, x);
-    std.log.warn("str: {s}, hash {d}\n", .{ x, hasher.final() });
-    autoHash(&hasher, hasher);
-    std.log.warn("hash: {d}\n", .{hasher.final()});
-    autoHash(&hasher, str);
-    std.log.warn("str: {s}, hash {d}\n", .{ str, hasher.final() });
 }
