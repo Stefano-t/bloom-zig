@@ -27,11 +27,11 @@ pub const BloomFilter = struct {
     }
 
     /// Add the input hash to the filter
-    pub fn add(self: *Self, hash: u128) void {
-        var hash1 = @as(u64, @truncate(hash)); // init the hash with lower 64 bits
-        const hash2 = @as(u64, @truncate(hash >> 64)); // second hash is upper 64 bits
+    pub fn add(self: *Self, hash: u64) void {
+        var hash1 = @as(u32, @truncate(hash)); // init the hash with lower 64 bits
+        const hash2 = @as(u32, @truncate(hash >> 32)); // second hash is upper 64 bits
 
-        var i: usize = 0;
+        var i: u32 = 0;
         while (i < self.n_hash) : (i += 1) {
             hash1 +%= i *% hash2;
             self.buffer.set(hash1 % self.buffer.capacity());
@@ -39,12 +39,12 @@ pub const BloomFilter = struct {
     }
 
     /// Check if the the hash is inside the filter
-    pub fn present(self: *const Self, hash: u128) bool {
-        var hash1 = @as(u64, @truncate(hash));
-        const hash2 = @as(u64, @truncate(hash >> 64));
+    pub fn present(self: *const Self, hash: u64) bool {
+        var hash1 = @as(u32, @truncate(hash));
+        const hash2 = @as(u32, @truncate(hash >> 32));
 
         var bit_set: usize = 0;
-        var i: usize = 0;
+        var i: u32 = 0;
         while (i < self.n_hash) : (i += 1) {
             hash1 +%= i *% hash2;
             if (self.buffer.present(hash1 % self.buffer.capacity())) {
@@ -65,8 +65,8 @@ const testing = std.testing;
 test "bloom filter" {
     var filter = try BloomFilter.init(100, 5);
     defer filter.deinit();
-    filter.add(@as(u128, 10));
-    filter.add(@as(u128, 20));
+    filter.add(@as(u64, 10));
+    filter.add(@as(u64, 20));
     try testing.expect(filter.present(10));
     try testing.expect(filter.present(20));
     try testing.expect(!filter.present(30));
@@ -74,12 +74,12 @@ test "bloom filter" {
     // Even if we're using 5 distinct hash functions, we're supplying a very pathological case as input.
     // In general, we would except 10 (even if there might be collisions)
     try testing.expectEqual(@as(usize, 2), filter.count());
-    filter.add(@as(u128, 2 << 121));
-    try testing.expectEqual(@as(usize, 7), filter.count());
+    filter.add(@as(u64, 2 << 61));
+    try testing.expectEqual(@as(usize, 6), filter.count());
 }
 
 test "add complex object" {
-    const FVN = std.hash.Fnv1a_128;
+    const FVN = std.hash.Fnv1a_64;
     var bloom = try BloomFilter.init(1000, 5);
     const obj = "abc def ghi";
     bloom.add(FVN.hash(std.mem.asBytes(obj)));

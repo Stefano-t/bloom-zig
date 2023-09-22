@@ -12,15 +12,15 @@ const ArrayList = std.ArrayList;
 pub const BitArray = struct {
     const Self = @This();
 
-    memory: ArrayList(u64),
+    memory: ArrayList(u32),
     size: usize,
 
     pub fn init(ally: std.mem.Allocator, size: usize) !Self {
-        // Get the number of elements. Divide by 64 since we're using u64 as
+        // Get the number of elements. Divide by 32 since we're using u32 as
         // base element.
-        const vec_elts = try math.divCeil(usize, size, @as(usize, 64));
+        const vec_elts = try math.divCeil(usize, size, @as(usize, 32));
         // Create the vector
-        var vec = try ArrayList(u64).initCapacity(ally, vec_elts);
+        var vec = try ArrayList(u32).initCapacity(ally, vec_elts);
         var i: usize = 0;
         while (i < vec_elts) : (i += 1) {
             vec.appendAssumeCapacity(0);
@@ -39,38 +39,38 @@ pub const BitArray = struct {
 
     /// Set value and `idx`. If value was already set, do nothing.
     pub fn set(self: *Self, idx: usize) void {
-        // Compute u64 bag and bit.
-        const vec_idx = @divFloor(idx, @as(usize, 64));
-        const bit = idx % 64;
+        // Compute u32 bag and bit.
+        const vec_idx = @divFloor(idx, @as(usize, 32));
+        const bit = idx % 32;
         // Set to 1 the bit in the corresponding element.
-        self.memory.items[vec_idx] |= math.shl(u64, 1, bit);
+        self.memory.items[vec_idx] |= math.shl(u32, 1, bit);
     }
 
     /// Unset value and `idx`. If value was already set, do nothing.
     pub fn unset(self: *Self, idx: usize) void {
-        // Compute u64 bag and bit.
-        const vec_idx = @divFloor(idx, @as(usize, 64));
-        const bit = idx % 64;
+        // Compute u32 bag and bit.
+        const vec_idx = @divFloor(idx, @as(usize, 32));
+        const bit = idx % 32;
         // Set to 1 the bit in the corresponding element.
-        self.memory.items[vec_idx] &= ~math.shl(u64, 1, bit);
+        self.memory.items[vec_idx] &= ~math.shl(u32, 1, bit);
     }
 
     /// Check whether the value ad index `idx` is set.
     pub fn present(self: *const Self, idx: usize) bool {
-        const vec_idx = @divFloor(idx, @as(usize, 64));
-        const bit = idx % 64;
-        return (self.memory.items[vec_idx] & math.shl(u64, 1, bit)) != 0;
+        const vec_idx = @divFloor(idx, @as(usize, 32));
+        const bit = idx % 32;
+        return (self.memory.items[vec_idx] & math.shl(u32, 1, bit)) != 0;
     }
 
     /// Compute the number of bit set in the array.
     pub fn count(self: *const Self) usize {
         var c: usize = 0;
-        var tmp: u64 = 0;
+        var tmp: u32 = 0;
         // Kerninghan's way to compute bits set
         for (self.memory.items) |item| {
             tmp = item;
-            while (tmp != 0) : (c += 1) {
-                tmp &= tmp - 1;
+            while (tmp > 0) : (c += 1) {
+                tmp &= (tmp - 1);
             }
         }
 
@@ -87,7 +87,7 @@ const testing = std.testing;
 test "bitarray" {
     var arr = try BitArray.init(testing.allocator, 100);
     defer arr.deinit();
-    try testing.expectEqual(arr.memory.capacity, 2);
+    try testing.expectEqual(arr.memory.capacity, 4);
 
     arr.set(0);
     arr.set(23);
@@ -95,11 +95,11 @@ test "bitarray" {
     arr.set(65);
 
     try testing.expectEqual(arr.memory.items[0], (1 << 0) + (1 << 23));
-    try testing.expectEqual(arr.memory.items[1], (1 << 0) + (1 << 1));
+    try testing.expectEqual(arr.memory.items[2], (1 << 0) + (1 << 1));
     try testing.expectEqual(arr.count(), 4);
 
     arr.set(65);
-    try testing.expectEqual(arr.memory.items[1], (1 << 0) + (1 << 1));
+    try testing.expectEqual(arr.memory.items[2], (1 << 0) + (1 << 1));
 
     try testing.expect(arr.present(0));
     try testing.expect(arr.present(65));
@@ -109,14 +109,14 @@ test "bitarray" {
     // change nothing
     arr.unset(25);
     try testing.expectEqual(arr.memory.items[0], (1 << 0) + (1 << 23));
-    try testing.expectEqual(arr.memory.items[1], (1 << 0) + (1 << 1));
+    try testing.expectEqual(arr.memory.items[2], (1 << 0) + (1 << 1));
 
     arr.unset(64);
     try testing.expectEqual(arr.memory.items[0], (1 << 0) + (1 << 23));
-    try testing.expectEqual(arr.memory.items[1], (1 << 1));
+    try testing.expectEqual(arr.memory.items[2], (1 << 1));
 
     arr.unset(64);
-    try testing.expectEqual(arr.memory.items[1], (1 << 1));
+    try testing.expectEqual(arr.memory.items[2], (1 << 1));
 
     try testing.expectEqual(arr.count(), 3);
 }

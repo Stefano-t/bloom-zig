@@ -73,10 +73,10 @@ pub fn fnv_128(bytes: []const u8) u128 {
 /// where h_1 and h_2 are the lower and upper part of the input hash.
 ///
 /// Refer to https://www.eecs.harvard.edu/~michaelm/postscripts/tr-02-05.pdf
-pub fn generate_nth_hash(hash: u128, k: usize) u64 {
-    var hash1: u64 = @truncate(hash); // init the hash with lower 64 bits
-    const hash2: u64 = @truncate(hash >> 64); // second hash is upper 64 bits
-    var step: usize = 0;
+pub fn generate_nth_hash(hash: u64, k: usize) u32 {
+    var hash1: u32 = @truncate(hash); // init the hash with lower 64 bits
+    const hash2: u32 = @truncate(hash >> 32); // second hash is upper 64 bits
+    var step: u32 = 0;
     while (step <= k) : (step += 1) {
         hash1 +%= step *% hash2;
     }
@@ -90,7 +90,7 @@ test "bit shifting" {
 }
 
 test "generate hash" {
-    const h = fnv_128("ciao");
+    const h = fnv_1("ciao");
     var i: usize = 0;
     var hashed: u64 = 0;
     var tmp: u64 = 0;
