@@ -1,6 +1,7 @@
 pub const BloomFilter = @import("bloom.zig").BloomFilter;
 pub const BitArray = @import("bitarr.zig").BitArray;
-pub const fnv_128 = @import("hash.zig").fnv_128;
+pub const fnv_1 = @import("hash.zig").fnv_1;
+pub const fnv_1a = @import("hash.zig").fnv_1a;
 
 test {
     const testing = @import("std").testing;

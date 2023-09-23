@@ -25,7 +25,7 @@ const BloomFilter = struct {
 fn BloomFilter_dealloc(self: [*c]PyObject) callconv(.C) void {
     var obj: *BloomFilter = @ptrCast(self);
     obj.forward.deinit();
-    @call(.auto, py.Py_TYPE(self).*.tp_free.?, .{self});
+    py.Py_TYPE(obj).*.tp_free.?(self);
 }
 
 // __init__
@@ -47,7 +47,11 @@ fn BloomFilter_add(self: [*c]PyObject, hash: [*c]PyObject) callconv(.C) [*c]PyOb
     if (PyArg_ParseTuple(hash, "K", &c_hash) == 0) return null;
     var obj: *BloomFilter = @ptrCast(self);
     obj.forward.add(@intCast(c_hash));
-    return py.Py_None;
+    // @NOTE: not sure why, but doing this removes a runtime error where None is deallocated.
+    // Refer to this thread for further info: https://stackoverflow.com/questions/15287590/why-should-py-increfpy-none-be-required-before-returning-py-none-in-c/15288194#15288194
+    var none: [*c]PyObject = py.Py_None;
+    py.Py_INCREF(none);
+    return none;
 }
 
 // present
@@ -70,14 +74,13 @@ fn BloomFilter_count(self: [*c]PyObject, _: [*c]PyObject) callconv(.C) [*c]PyObj
 
 // Define members of object
 const Custom_members = [_]py.PyMemberDef{
-    // [NOTE]: Not sure if this export is useful
-    // py.PyMemberDef{
-    //     .name = "forward",
-    //     .type = py.T_OBJECT_EX,
-    //     .offset = @offsetOf(BloomFilter, "forward"),
-    //     .flags = 0,
-    //     .doc = "forwarded object",
-    // },
+    py.PyMemberDef{
+        .name = "forward",
+        .type = py.T_OBJECT_EX,
+        .offset = @offsetOf(BloomFilter, "forward"),
+        .flags = 0,
+        .doc = "forwarded object",
+    },
     mem.zeroInit(py.PyMemberDef, .{}),
 };
 
@@ -118,18 +121,18 @@ const BloomFilterType = mem.zeroInit(py.PyTypeObject, .{
 });
 
 // Non cryptographic hashing function
-fn fnv(_: [*c]PyObject, args: [*c]PyObject) callconv(.C) [*c]PyObject {
+fn fnv_1(_: [*c]PyObject, args: [*c]PyObject) callconv(.C) [*c]PyObject {
     var s: [*:0]u8 = undefined;
     if (PyArg_ParseTuple(args, "s", &s) == 0) return null;
-    return py.PyLong_FromUnsignedLongLong(@intCast(bloom.fnv_128(mem.span(s))));
+    return py.PyLong_FromUnsignedLongLong(@intCast(bloom.fnv_1(mem.span(s))));
 }
 
 const methods = [_]PyMethodDef{
     PyMethodDef{
-        .ml_name = "fnv",
-        .ml_meth = fnv,
+        .ml_name = "fnv_1",
+        .ml_meth = fnv_1,
         .ml_flags = py.METH_VARARGS,
-        .ml_doc = "Hash the input string using the FNV 128bit algorithm.",
+        .ml_doc = "Hash the input string using the FNV 64bit algorithm.",
     },
     mem.zeroInit(PyMethodDef, .{}),
 };

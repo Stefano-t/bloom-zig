@@ -3,6 +3,7 @@
 clean:
 	rm -fr build
 	rm -fr dist
+	rm -rf *.egg-info/
 
 .PHONY: compile_wheel install test-py
 
