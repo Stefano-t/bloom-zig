@@ -1,7 +1,9 @@
 import os
 import platform
+import sysconfig
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
+
 
 def deps():
     return [
@@ -10,6 +12,31 @@ def deps():
         "--mod",
         "bloom::../src/main.zig",
     ]
+
+
+def get_arch_triplet():
+    uname = platform.uname()
+
+    machine = uname.machine.lower()
+    if machine == "arm64":
+        # Using 'arm64' on a MacOs causes runtime crashes.
+        machine = "aarch64"
+
+    system = uname.system.lower()
+    if system == "darwin":
+        system = "macos"
+
+    abi = "none"
+    if system == "linux":
+        abi = "gnu"  # @NOTE: Not sure about that.
+
+    return f"{machine}-{system}-{abi}"
+
+
+def get_include_dir():
+    paths = sysconfig.get_paths()
+    return f"-I{paths.get('include', '')}"
+
 
 class Builder(build_ext):
     def build_extension(self, ext):
@@ -24,13 +51,14 @@ class Builder(build_ext):
                     "build-lib",
                     "-O",
                     mode,
-                    # "-lc",  # @TODO: not sure if libc is useful. It seems useful only with certain architectures (e.g., arm)
+                    "-lc",
                     f"-femit-bin={self.get_ext_fullpath(ext.name)}",
                     "-fallow-shlib-undefined",
                     *deps(),
                     "-target",
-                    "aarch64-macos-none",  # @TODO: make general
+                    get_arch_triplet(),
                     "-dynamic",
+                    get_include_dir(),
                     *[f"-I{d}" for d in self.include_dirs],
                     ext.sources[0],
                 ]

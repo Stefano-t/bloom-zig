@@ -1,11 +1,11 @@
 .PHONY: clean
 
 clean:
-	rm -fr build
-	rm -fr dist
+	rm -rf build
+	rm -rf dist
 	rm -rf *.egg-info/
 
-.PHONY: compile_wheel install test-py
+.PHONY: compile-wheel install test-py
 
 compile-wheel: clean
 	python3 setup.py bdist_wheel
