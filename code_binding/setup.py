@@ -65,11 +65,22 @@ class Builder(build_ext):
             )
 
 
+def readme():
+    with open("../README.md") as f:
+        return f.read()
+
+
 setup(
     name="zig-bloom",
-    version="0.0.1",
+    version="0.0.6",
     description="Bloom filter implemented in zig",
+    long_description=readme(),
+    long_description_content_type="text/markdown",
     # Extension name must match the exported lib name
     ext_modules=[Extension("bloom", sources=["binding.zig"])],
     cmdclass={"build_ext": Builder},
+    author="Stefano Taverni",
+    author_email="ste.taverni@gmail.com",
+    url="https://github.com/Stefano-t/bloom-zig",
+    license="BSD-3-Clause",
 )
