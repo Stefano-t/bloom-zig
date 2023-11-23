@@ -72,7 +72,7 @@ def readme():
 
 setup(
     name="zig-bloom",
-    version="0.0.6",
+    version="0.0.7",
     description="Bloom filter implemented in zig",
     long_description=readme(),
     long_description_content_type="text/markdown",
