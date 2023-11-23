@@ -10,7 +10,7 @@
 Right now, there's only a wheel for Macos. To install it, you can run the usual
 
 ```bash
-pip install bloom-zig
+pip install zig-bloom
 ```
 
 If you need to install this package for another architecture, refer to the
