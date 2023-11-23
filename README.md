@@ -44,7 +44,7 @@ package has been correctly installed, run `make test`.
 ## How it works
 
 The `src` folder contains the Zig code for the Bloom filter. It internally uses
-an ArrayList of u64, where each bit in a u64 element represents an element in
+an ArrayList of u32, where each bit in a u32 element represents an element in
 the set. I'd preferred to use a more efficient structure or directly an array
 of u64, but I'm not aware of the compile-time functionality of Zig and if they
 integrate well with Python code. So I decided to stick with the basics.
@@ -56,7 +56,7 @@ code for writing Python bindings.
 
 The exposed functionalities inside Python are a class called `BloomFilter` with
 3 methods: `add`, `present` and `count`. There's also a function called `fnv`
-to compute a 128bit non-cryptographic hash.
+to compute a 64 bit non-cryptographic hash.
 
 ## Why?
 
@@ -67,9 +67,9 @@ Zig has with C libraries made the process (not-so-much) simple.
 
 ## TODOs
 
-- [ ] make wheels for manylinux
+- [X] make wheels for manylinux
 - [X] Pypi package(s)
-- [ ] examples and benchmark
+- [X] examples and benchmark
 
 
 ## Resources

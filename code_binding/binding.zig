@@ -107,7 +107,11 @@ const BloomFilter_methods = [_]py.PyMethodDef{
     mem.zeroInit(py.PyMethodDef, .{}),
 };
 
-const BloomFilterType = mem.zeroInit(py.PyTypeObject, .{
+var BloomFilterType = mem.zeroInit(py.PyTypeObject, .{
+    .ob_base = py.PyVarObject{
+        .ob_base = PyObject{ .ob_refcnt = 1, .ob_type = null},
+        .ob_size = 0,
+    },
     .tp_name = "bloom.BloomFilter",
     .tp_doc = py.PyDoc_STR("BloomFilter"),
     .tp_basicsize = @sizeOf(BloomFilter),
@@ -137,7 +141,7 @@ const methods = [_]PyMethodDef{
     mem.zeroInit(PyMethodDef, .{}),
 };
 
-const module = PyModuleDef{
+var module = PyModuleDef{
     .m_base = PyModuleDef_Base{
         .ob_base = PyObject{
             .ob_refcnt = 1,
@@ -157,15 +161,22 @@ const module = PyModuleDef{
     .m_free = null,
 };
 
-export fn PyInit_bloom() ?*PyObject {
+pub export fn PyInit_bloom() ?*PyObject {
     var m: ?*PyObject = undefined;
-    if (py.PyType_Ready(@ptrCast(@constCast(&BloomFilterType))) < 0) return null;
-    m = py.PyModule_Create(@as([*c]py.struct_PyModuleDef, @constCast(&module))) orelse return null;
+    if (py.PyType_Ready(&BloomFilterType) < 0) {
+        py.PyErr_SetString(py.PyExc_RuntimeError, "Module failed to load");
+        return null;
+    }
+    m = py.PyModule_Create(&module) orelse {
+        py.PyErr_SetString(py.PyExc_RuntimeError, "Module failed to create");
+        return null;
+    };
 
     py.Py_INCREF(&BloomFilterType);
-    if (py.PyModule_AddObject(m, "BloomFilter", @ptrCast(@constCast(&BloomFilterType))) < 0) {
+    if (py.PyModule_AddObject(m, "BloomFilter", @ptrCast(&BloomFilterType)) < 0) {
         py.Py_DECREF(&BloomFilterType);
         py.Py_DECREF(m);
+        py.PyErr_SetString(py.PyExc_RuntimeError, "No add object");
         return null;
     }
     return m;
